@@ -73,5 +73,5 @@ for tool, dir_name in tools.items():
 df = pd.DataFrame.from_dict(data, orient="index")
 
 # Print DataFrame
-print(df.round(1))
+print(df.round(1).to_markdown())
 
