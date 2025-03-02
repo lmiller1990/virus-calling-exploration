@@ -1,6 +1,7 @@
 
 <script setup lang="ts">
         import { computed } from 'vue'
+        import { DIV } from "./constants"
 
         export interface GeneInfo {
                         start: number,
@@ -12,8 +13,6 @@
                 gene: GeneInfo
                 }>()
 
-        const DIV = 5
-
         const getStyle = computed(() => {
                 return {
                         width: `${(props.gene.end - props.gene.start)/DIV}px`,
@@ -24,6 +23,7 @@
 
 <template>
 
-        <div :style="getStyle" class="absolute h-full cursor-pointer">
+        <div :style="getStyle" class="absolute h-full cursor-pointer border-x-gray-500 border-x-2">
+            <slot />
         </div>
 </template>
