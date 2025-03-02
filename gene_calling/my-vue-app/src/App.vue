@@ -38,30 +38,35 @@ const tracks = [
 
 <template>
     <div class="flex flex-col justify-between h-screen">
-        <div class="bg-gray-200">
-            <div v-for="track of tracks" :key="track.label" class="flex">
+        <div class="overflow-x-auto pb-[15px]">
+            <div class="bg-gray-200">
+                <div v-for="track of tracks" :key="track.label" class="flex">
+                    <Track>
+                    <template #label>
+                        <div>{{ track.label }}</div>
+                    </template>
+
+                    <Gene v-for="gene in track.genes" :gene="gene" :class="track.class" @click="() => handleGeneInfo(gene)"  />
+                    </Track>
+                </div>
+
                 <Track>
-                <template #label>
-                    <div>{{ track.label }}</div>
-                </template>
-
-                <Gene v-for="gene in track.genes" :gene="gene" :class="track.class" @click="() => handleGeneInfo(gene)"  />
-                </Track>
-            </div>
-
-            <Track>
                 <template #label>
                     <div>Coordinates</div>
                 </template>
-            <Gene v-for="gene in fakeGenes" :gene="gene" class="whitespace-pre text-xs pt-2 border-l-0 border-x-gray-100 border-dotted">
-            {{ ` ${gene.start}` }}
-            </Gene>
-            </Track>
+                <Gene v-for="gene in fakeGenes" :gene="gene" class="whitespace-pre text-xs pt-2 border-l-0 border-x-gray-100 border-dotted">
+                {{ ` ${gene.start}` }}
+                </Gene>
+                </Track>
+            </div>
         </div>
-        <div v-if="selectedGene" class="break-all p-4">
-            <p>Start: {{ selectedGene.start }}</p>
-            <p>End: {{ selectedGene.end }}</p>
-            <p>Sequence: {{ selectedGene.sequence }}</p>
+
+        <div class="h-80">
+            <div v-if="selectedGene" class="break-all p-4">
+                <p>Start: {{ selectedGene.start }}</p>
+                <p>End: {{ selectedGene.end }}</p>
+                <p>Sequence: {{ selectedGene.sequence }}</p>
+            </div>
         </div>
 
     </div>
