@@ -1,29 +1,34 @@
-genome="../hadv_f/GCA_033353495.1_ASM3335349v1_genomic.fna"
+#!/bin/bash
+set -e  # Stop on errors
 
-rm -rf glimmer_output
-mkdir -p glimmer_output/hadv_f
+genome="../hadv_f/GCA_033353495.1_ASM3335349v1_genomic.fna"
+output_dir="glimmer_output/hadv_f"
+
+rm -rf "$output_dir"
+mkdir -p "$output_dir"
 
 echo "Finding long ORFs..."
-long-orfs -n "$genome" glimmer_output/hadv_f/long_orfs
+long-orfs -n "$genome" "$output_dir/long_orfs"
 
-# Remove headers and save a cleaned genome file
+echo "Merging all available adenovirus genomes for training..."
+cat ../hadv_f/*.fna > "$output_dir/training_set.fna"
 
-echo "Building ICM..."
-build-icm glimmer_output/hadv_f/icm < "$genome"
+echo "Building ICM using merged training set..."
+build-icm "$output_dir/icm" < "$output_dir/training_set.fna"
 
-echo "Predicting genes"
+echo "Predicting genes..."
 glimmer3 \
     --linear \
     -o50 -g110 -t30 \
     "$genome" \
-    glimmer_output/hadv_f/icm \
-    glimmer_output/hadv_f/predicted
+    "$output_dir/icm" \
+    "$output_dir/predicted"
 
-# fix - for whatever reason
-#
-grep -v "^>" glimmer_output/hadv_f/predicted.predict > glimmer_output/hadv_f/predicted_clean.predict
+# Fix format issue (remove headers)
+grep -v "^>" "$output_dir/predicted.predict" > "$output_dir/predicted_clean.predict"
 
-echo "Extract predicted genes"
-extract "$genome" glimmer_output/hadv_f/predicted_clean.predict > glimmer_output/hadv_f/genes.fna
+echo "Extracting predicted genes..."
+extract "$genome" "$output_dir/predicted_clean.predict" > "$output_dir/genes.fna"
 
+echo "Done!"
 

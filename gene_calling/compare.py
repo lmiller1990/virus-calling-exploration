@@ -167,29 +167,59 @@ def compare_overlapping_genomic_regions():
 compare_overlapping_genomic_regions()
 
 
-import pybedtools
+import pandas as pd
+import numpy as np
 
-def calculate_base_pair_overlap():
-    glimmer_bed = pybedtools.BedTool("glimmer.bed")
-    prodigal_bed = pybedtools.BedTool("prodigal.bed")
+# Define BED files data
+# Convert to DataFrame
+df_a = pd.DataFrame(glimmer_genes, columns=["start", "end"])
+df_b = pd.DataFrame(prodigal_genes, columns=["start", "end"])
 
-    # Compute total base pairs covered by each tool
-    total_glimmer_bp = sum([int(feature.end) - int(feature.start) for feature in glimmer_bed])
-    total_prodigal_bp = sum([int(feature.end) - int(feature.start) for feature in prodigal_bed])
+# Function to compute intersection length
+def compute_intersection(df_a, df_b):
+    total_intersection = 0
+    total_bases_b = sum(df_b["end"] - df_b["start"])
 
-    # Compute overlapping base pairs
-    overlap = glimmer_bed.intersect(prodigal_bed, wo=True)  # Report base overlap
-    overlapping_bp = sum([int(feature[-1]) for feature in overlap])  # Last column gives overlap length
+    for _, (a_start, a_end) in df_a.iterrows():
+        for _, (b_start, b_end) in df_b.iterrows():
+            overlap_start = max(a_start, b_start)
+            overlap_end = min(a_end, b_end)
+            if overlap_start < overlap_end:
+                total_intersection += (overlap_end - overlap_start)
 
-    # Compute percentages
-    percent_glimmer_bp_overlap = (overlapping_bp / total_glimmer_bp) * 100 if total_glimmer_bp > 0 else 0
-    percent_prodigal_bp_overlap = (overlapping_bp / total_prodigal_bp) * 100 if total_prodigal_bp > 0 else 0
+    return total_intersection, total_bases_b
 
-    print(f"Total Glimmer base pairs: {total_glimmer_bp}")
-    print(f"Total Prodigal base pairs: {total_prodigal_bp}")
-    print(f"Overlapping base pairs: {overlapping_bp}")
-    print(f"Percentage of Glimmer base pairs overlapping: {percent_glimmer_bp_overlap:.2f}%")
-    print(f"Percentage of Prodigal base pairs overlapping: {percent_prodigal_bp_overlap:.2f}%")
+# Compute
+total_intersection, total_bases_b = compute_intersection(df_a, df_b)
+percentage_contained = (total_intersection / total_bases_b) * 100
 
-calculate_base_pair_overlap()
-    
+# Output results
+print(total_intersection, total_bases_b, percentage_contained)
+
+
+# import pybedtools
+# 
+# def calculate_base_pair_overlap():
+#     glimmer_bed = pybedtools.BedTool("glimmer.bed")
+#     prodigal_bed = pybedtools.BedTool("prodigal.bed")
+# 
+#     # Compute total base pairs covered by each tool
+#     total_glimmer_bp = sum([int(feature.end) - int(feature.start) for feature in glimmer_bed])
+#     total_prodigal_bp = sum([int(feature.end) - int(feature.start) for feature in prodigal_bed])
+# 
+#     # Compute overlapping base pairs
+#     overlap = glimmer_bed.intersect(prodigal_bed, wo=True)  # Report base overlap
+#     overlapping_bp = sum([int(feature[-1]) for feature in overlap])  # Last column gives overlap length
+# 
+#     # Compute percentages
+#     percent_glimmer_bp_overlap = (overlapping_bp / total_glimmer_bp) * 100 if total_glimmer_bp > 0 else 0
+#     percent_prodigal_bp_overlap = (overlapping_bp / total_prodigal_bp) * 100 if total_prodigal_bp > 0 else 0
+# 
+#     print(f"Total Glimmer base pairs: {total_glimmer_bp}")
+#     print(f"Total Prodigal base pairs: {total_prodigal_bp}")
+#     print(f"Overlapping base pairs: {overlapping_bp}")
+#     print(f"Percentage of Glimmer base pairs overlapping: {percent_glimmer_bp_overlap:.2f}%")
+#     print(f"Percentage of Prodigal base pairs overlapping: {percent_prodigal_bp_overlap:.2f}%")
+# 
+# calculate_base_pair_overlap()
+#     

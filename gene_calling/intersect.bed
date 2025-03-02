@@ -1,0 +1,7 @@
+contig1	1355	1859	prodigal_gene1	contig1	1492	1642	glimmer_gene1	150
+contig2	2491	3070	prodigal_gene2	contig2	1660	3070	glimmer_gene2	579
+contig3	3577	4699	prodigal_gene3	contig3	3577	4699	glimmer_gene3	1122
+contig4	4677	7596	prodigal_gene4	contig4	4677	7869	glimmer_gene4	2919
+contig7	10169	11309	prodigal_gene7	contig7	10169	11309	glimmer_gene7	1140
+contig8	11332	13072	prodigal_gene8	contig8	11332	13072	glimmer_gene8	1740
+contig11	15552	16029	prodigal_gene11	contig11	15282	16317	glimmer_gene11	477
