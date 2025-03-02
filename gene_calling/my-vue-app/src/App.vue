@@ -21,27 +21,40 @@
             return fake
         })
 
+
+const tracks = [
+    { 
+        label: "Prodigal",
+        genes: genes.prodigal,
+        class: 'bg-blue-500 hover:bg-blue-500'
+    },
+    { 
+        label: "Glimmer",
+        genes: genes.glimmer,
+        class: 'bg-red-500 hover:bg-red-500'
+    }
+]
 </script>
 
 <template>
     <div class="flex flex-col justify-between h-screen">
         <div class="bg-gray-200">
-            <div class="flex">
-                <div>Prodigal</div>
+            <div v-for="track of tracks" :key="track.label" class="flex">
                 <Track>
-                <Gene v-for="gene in genes.prodigal" :gene="gene" class="bg-blue-400 hover:bg-blue-500" @click="() => handleGeneInfo(gene)"  />
+                <template #label>
+                    <div>{{ track.label }}</div>
+                </template>
+
+                <Gene v-for="gene in track.genes" :gene="gene" :class="track.class" @click="() => handleGeneInfo(gene)"  />
                 </Track>
             </div>
 
-            <div class="flex">
-                <div>Glimmer</div>
             <Track>
-            <Gene v-for="gene in genes.glimmer" :gene="gene"  class="bg-red-400 hover:bg-red-500" />
-            </Track>
-            </div>
-            <Track>
-            <Gene v-for="gene in fakeGenes" :gene="gene" class="whitespace-pre">
-            {{ ` ${gene.end}` }}
+                <template #label>
+                    <div>Coordinates</div>
+                </template>
+            <Gene v-for="gene in fakeGenes" :gene="gene" class="whitespace-pre text-xs pt-2 border-l-0 border-x-gray-100 border-dotted">
+            {{ ` ${gene.start}` }}
             </Gene>
             </Track>
         </div>
