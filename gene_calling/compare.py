@@ -1,4 +1,6 @@
 import os
+from typing import Tuple, TypedDict
+import re
 import pandas as pd
 
 def parse_genes(fna_path: str):
@@ -75,3 +77,119 @@ df = pd.DataFrame.from_dict(data, orient="index")
 # Print DataFrame
 print(df.round(1).to_markdown())
 
+class ParsedGene(TypedDict):
+    start: int
+    end: int
+    sequence: str
+
+
+def parse_glimmer(fna_path) -> list[ParsedGene]:
+    """Parses Glimmer output and extracts genomic coordinates and sequences."""
+    genes = []
+    with open(fna_path) as f:
+        lines = f.readlines()
+    
+    seq = ""
+    for i, line in enumerate(lines):
+        if line.startswith(">"):
+            if seq:
+                genes[-1]["sequence"] = seq  # Store the previous sequence
+            seq = ""  # Reset sequence
+            
+            parts = line.strip().split()
+            if len(parts) >= 3:
+                start, end = int(parts[1]), int(parts[2])
+                genes.append({"start": min(start, end), "end": max(start, end), "sequence": ""})
+        else:
+            seq += line.strip()
+    
+    if seq:
+        genes[-1]["sequence"] = seq  # Store the last sequence
+    
+    return genes
+
+
+def parse_prodigal(fna_path) -> list[ParsedGene]:
+    """Parses Prodigal output and extracts genomic coordinates and sequences."""
+    genes = []
+    with open(fna_path) as f:
+        lines = f.readlines()
+    
+    seq = ""
+    for i, line in enumerate(lines):
+        if line.startswith(">"):
+            if seq:
+                genes[-1]["sequence"] = seq  # Store the previous sequence
+            seq = ""  # Reset sequence
+            
+            match = re.search(r"# (\d+) # (\d+) #", line)
+            if match:
+                start, end = int(match.group(1)), int(match.group(2))
+                genes.append({"start": min(start, end), "end": max(start, end), "sequence": ""})
+        else:
+            seq += line.strip()
+    
+    if seq:
+        genes[-1]["sequence"] = seq  # Store the last sequence
+    
+    return genes
+
+
+def write_bed_file(genes: list[ParsedGene], output_path: str, tool_name: str):
+    with open(output_path, "w") as bed_file:
+        for idx, gene in enumerate(genes):
+            start = gene['start']
+            end = gene['end']
+            # BED format is 0-based, so subtract 1 from start
+            bed_file.write(f"contig{idx}\t{start - 1}\t{end}\t{tool_name}_gene{idx}\n")
+
+glimmer_path = "glimmer_output/hadv_f/genes.fna"
+prodigal_path = "prodigal_output/hadv_f/genes.fna"
+
+glimmer_genes = parse_glimmer(glimmer_path)
+prodigal_genes = parse_prodigal(prodigal_path)
+
+import json
+
+genes = {
+    "glimmer": glimmer_genes,
+    "prodigal": prodigal_genes,
+}
+
+with open("genes.json", "w") as f:
+    f.write(json.dumps(genes, indent=4))
+
+def compare_overlapping_genomic_regions():
+
+    write_bed_file(glimmer_genes, "glimmer.bed", "glimmer")
+    write_bed_file(prodigal_genes, "prodigal.bed", "prodigal")
+
+compare_overlapping_genomic_regions()
+
+
+import pybedtools
+
+def calculate_base_pair_overlap():
+    glimmer_bed = pybedtools.BedTool("glimmer.bed")
+    prodigal_bed = pybedtools.BedTool("prodigal.bed")
+
+    # Compute total base pairs covered by each tool
+    total_glimmer_bp = sum([int(feature.end) - int(feature.start) for feature in glimmer_bed])
+    total_prodigal_bp = sum([int(feature.end) - int(feature.start) for feature in prodigal_bed])
+
+    # Compute overlapping base pairs
+    overlap = glimmer_bed.intersect(prodigal_bed, wo=True)  # Report base overlap
+    overlapping_bp = sum([int(feature[-1]) for feature in overlap])  # Last column gives overlap length
+
+    # Compute percentages
+    percent_glimmer_bp_overlap = (overlapping_bp / total_glimmer_bp) * 100 if total_glimmer_bp > 0 else 0
+    percent_prodigal_bp_overlap = (overlapping_bp / total_prodigal_bp) * 100 if total_prodigal_bp > 0 else 0
+
+    print(f"Total Glimmer base pairs: {total_glimmer_bp}")
+    print(f"Total Prodigal base pairs: {total_prodigal_bp}")
+    print(f"Overlapping base pairs: {overlapping_bp}")
+    print(f"Percentage of Glimmer base pairs overlapping: {percent_glimmer_bp_overlap:.2f}%")
+    print(f"Percentage of Prodigal base pairs overlapping: {percent_prodigal_bp_overlap:.2f}%")
+
+calculate_base_pair_overlap()
+    
